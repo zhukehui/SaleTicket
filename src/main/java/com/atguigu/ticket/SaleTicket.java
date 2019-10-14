@@ -1,5 +1,9 @@
 package com.atguigu.ticket;
 
+import java.util.HashSet;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -23,12 +27,24 @@ import java.util.concurrent.locks.ReentrantLock;
 public class SaleTicket {
 	public static void main(String[] args) {
 		Ticket ticket = new Ticket();
-		
-		new Thread(() -> {for (int i = 0; i < 40; i++) ticket.sale(); },"售票员一").start();
-		new Thread(() -> {for (int i = 0; i < 40; i++) ticket.sale(); },"售票员二").start();
-		new Thread(() -> {for (int i = 0; i < 40; i++) ticket.sale(); },"售票员三").start();
-
-	
+		//ExecutorService executor = Executors.newFixedThreadPool(3);//一池3线程
+		ExecutorService executor = Executors.newCachedThreadPool();//一池N线程
+		/*
+		 * new Thread(() -> {for (int i = 0; i < 40; i++) ticket.sale();
+		 * },"售票员一").start(); new Thread(() -> {for (int i = 0; i < 40; i++)
+		 * ticket.sale(); },"售票员二").start(); new Thread(() -> {for (int i = 0; i < 40;
+		 * i++) ticket.sale(); },"售票员三").start();
+		 */
+	try {
+		for (int i = 0; i < 30; i++) {
+			executor.submit(() -> {
+				ticket.sale();
+			});
+		}
+	} catch (Exception e) {
+	}finally {
+		executor.shutdown();
+	}
 		
 		/*
 		 * new Thread(new Runnable() {
@@ -79,5 +95,16 @@ class Ticket {// 资源类
 		}
     	
     }
-	 
 }
+
+/**
+ * 
+ *
+ * 多个线程同时读一个资源类没有任何问题，所以为了满足并发量，读取共享资源应该可以同时进行。
+ * 但是
+ * 如果有一个线程想去写共享资源来，就不应该再有其它线程可以对该资源进行读或写
+ * 小总结：
+ *          读-读能共存
+ *          读-写不能共存
+ *          写-写不能共存
+ */
